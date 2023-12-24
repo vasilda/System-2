@@ -64,7 +64,6 @@ class Tourists(SQLModel, table=True):
     Patronym: str
     AgeGroup: str
     CodeExcursion: Optional[int] = Field(default=None, foreign_key="excursions.CodeExcursion")
-'''
 # Функция заполнения таблицы Должности
 def CreatePost():
     post1 = ListPost(Name = "смотритель")
@@ -221,12 +220,11 @@ def CreateTourist():
         for tour in tours:
             session.add(tour)
         session.commit()
-'''
-#engine = create_engine("sqlite:///database.db")
+engine = create_engine("sqlite:///database.db")
 # Создание БД
-#if __name__ == "__main__":
-    #SQLModel.metadata.create_all(engine)
-    #CreatePost();      CreateStaff();    
-    #CreateHall();      CreateExhibits(); 
-    #CreateContract();  CreateRestorer()
-    #CreateExcursion(); CreateTourist()
+if __name__ == "__main__":
+    SQLModel.metadata.create_all(engine)
+    CreatePost();      CreateStaff();    
+    CreateHall();      CreateExhibits(); 
+    CreateContract();  CreateRestorer()
+    CreateExcursion(); CreateTourist()

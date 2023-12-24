@@ -1,10 +1,10 @@
 from typing import Union
 from pydantic import BaseModel
 from fastapi import *
-
+from datetime import datetime
+from datetime import date
 from models import*
 
-engine = create_engine("sqlite:///database.db")
 SQLModel.metadata.create_all(engine)
 app = FastAPI()
 def get_session():
@@ -12,7 +12,7 @@ def get_session():
       yield session
 # Функция заполнения таблицы Должности
 @app.post("/listpost/")
-async def CreatePost():
+async def Create_Post():
     post1 = ListPost(Name = "смотритель")
     post2 = ListPost(Name = "экскурсовод")
     with Session(engine) as session:
@@ -21,7 +21,7 @@ async def CreatePost():
         session.commit()
 # Функция заполнения таблицы Сотрудники
 @app.post("/staff/")
-def CreateStaff():
+def Create_Staff():
     staff1  = Staff(LName =    "Носкова", FName =    "Татьяна", Patronym =    "Николаевна", CodePost = 1)
     staff2  = Staff(LName =    "Субетто", FName =    "Дмитрий", Patronym = "Александровчи", CodePost = 1)
     staff3  = Staff(LName =     "Иванов", FName =       "Юрий", Patronym =      "Петрович", CodePost = 1)
@@ -40,7 +40,7 @@ def CreateStaff():
         session.commit()
 # Функция заполнения таблицы Залы
 @app.post("/hall/")
-def CreateHall():
+def Create_Hall():
     hall1 = Halls(NameHall = "Зал Древнего Египта", CodeStaff = 1) #100
     hall2 = Halls(NameHall =           "Белый зал", CodeStaff = 2) #289
     hall3 = Halls(NameHall =     "Военная галерея", CodeStaff = 3) #197
@@ -53,7 +53,7 @@ def CreateHall():
         session.commit()
 # Функция заполнения таблицы Экспонаты
 @app.post("/exhibits/")
-def CreateExhibits():
+def Create_Exhibits():
     exh1  = Exhibits(Name = "Статуя Аменемхета III", CodeHall = 1, Author = "NULL", Year = "NULL",
                      Look = "неуд.", Category = "скульптура", DateInspection = date(2023,10,13), CodeRestorer = "NULL")
     exh2  = Exhibits(Name = "Стела Хоремхеба", CodeHall = 1, Author = "NULL", Year = "NULL",
@@ -88,7 +88,7 @@ def CreateExhibits():
         session.commit()
 # Функция заполнения таблицы Контракты
 @app.post("/contracts/")
-def CreateContract():
+def Create_Contract():
     contr1 = Contracts(Begin = date(2019,1,1), End = date(2024,1,1))
     contr2 = Contracts(Begin = date(2020,1,1), End = date(2025,1,1))
     contr3 = Contracts(Begin = date(2021,1,1), End = date(2026,1,1))
@@ -101,7 +101,7 @@ def CreateContract():
         session.commit()
 # Функция заполнения таблицы Реставраторы
 @app.post("/restorers/")
-def CreateRestorer():
+def Create_Restorer():
     rest1 = Restorers(LName = "Васнецова", FName =   "Лилия", Patronym =   "Андреевна", CodeContract = 1)
     rest2 = Restorers(LName =   "Архипов", FName =  "Михаил", Patronym = "Анатольевич", CodeContract = 2)
     rest3 = Restorers(LName =    "Иванов", FName = "Алексей", Patronym =  "Викторович", CodeContract = 3)
@@ -114,7 +114,7 @@ def CreateRestorer():
         session.commit()
 # Функция заполнения таблицы Экскурсии
 @app.post("/excursions/")
-def CreateExcursion():
+def Create_Excursion():
     # Расписание экскурсий на понедельник
     ex1  = Excursions(Name = "Большое путешествие по Эрмитажу", Begin = time(11,30), End = time(13,30),
                       DayWeek = "пн", Cost = 5900, CodeStaff = 6, Quantity = 20)
@@ -156,7 +156,7 @@ def CreateExcursion():
         session.commit()
 # Функция заполнения таблицы Экскурсанты
 @app.post("/tourists/")
-def CreateTourist():
+def Create_Tourist():
     group  = ['дошкольник', 'школьник', 'студент', 'взрослый', 'пенсионер']
     tour1  = Tourists(LName =    "Гусева", FName = "Анастасия", Patronym =    "Сергеевна", AgeGroup = choice(group), CodeExcursion =  1)
     tour2  = Tourists(LName = "Чекалова", FName =     "Ольга", Patronym = "Ростиславовна", AgeGroup = choice(group), CodeExcursion =  1)
@@ -174,9 +174,10 @@ def CreateTourist():
         for tour in tours:
             session.add(tour)
         session.commit()
+# ------------------------------------------------------------------
 # Вывод расписания экскурсий в определенный день недели (пн, вт, ср)
 @app.get("/excursions/{day}", response_model=list[Excursions])
-def read_excurs(*, session: Session = Depends(get_session), day: str):
+def Read_Excursions(*, session: Session = Depends(get_session), day: str):
     ex = session.exec(select(Excursions).where(Excursions.DayWeek == day)).all()
     return ex
 # Класс описания туриста
@@ -185,7 +186,7 @@ class HumanT(BaseModel):
     CodeExcursion: int
 # Замена строки с информацией о туристе
 @app.put("/tourists/{ticket}")
-def update_item(ticket: int, tourist: HumanT):
+def Update_Tourist(ticket: int, tourist: HumanT):
     with Session(engine) as session:
         db_ticket = session.get(Tourists, ticket)
     if not db_ticket:
@@ -198,3 +199,32 @@ def update_item(ticket: int, tourist: HumanT):
     session.refresh(db_ticket)
     return db_ticket
     #return {"Ticket": ticket, "AgeGroup": tourist.AgeGroup, "CodeExcursion": tourist.CodeExcursion}
+# Вывод расписания экскурсий в определенный день недели (пн, вт, ср)
+@app.get("/tourists/{age_group}", response_model=list[Tourists])
+def Read_Tourist(*, session: Session = Depends(get_session), age_group: str):
+    people = session.exec(select(Tourists).where(Tourists.AgeGroup == age_group))
+    return people
+# Вывод экспонатов с внешним видом заданным параметром look (неуд., уд.)
+@app.get("/exhibits/", response_model=list[Exhibits])
+def Read_Exhibits(*, session: Session = Depends(get_session)): 
+    look = "неуд."
+    exh = session.exec(select(Exhibits).where(Exhibits.Look == look)).all()
+    return exh
+# Класс описания контракта
+class Contract(BaseModel):
+    Begin: date
+    End: date
+# Замена строки с информацией о контракте
+@app.put("/contracts/{code_contract}")
+def Update_Contract(code_contract: int, contract: Contract):
+    with Session(engine) as session:
+        db_code_contract = session.get(Contracts, code_contract)
+    if not db_code_contract:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    contract_data = contract.model_dump(exclude_unset=True)
+    for key, value in contract_data.items():
+        setattr(db_code_contract, key, value)
+    session.add(db_code_contract)
+    session.commit()
+    session.refresh(db_code_contract)
+    return db_code_contract
